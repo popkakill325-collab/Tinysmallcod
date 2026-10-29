@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05040b"><title>Lava Lumen</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05040b;touch-action:none;font-family:system-ui,sans-serif}
+canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
+#hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 18px) 14px calc(env(safe-area-inset-bottom) + 18px)}
+.brand{align-self:center;text-align:center;opacity:.8;letter-spacing:.25em;font-size:10px;font-weight:600;color:#eadfff;text-shadow:0 0 16px #b16cff}
+.bottom{pointer-events:auto;align-self:center;display:flex;gap:5px;padding:7px;border:1px solid #ffffff1a;background:#100d1d99;border-radius:999px;box-shadow:0 8px 40px #0008}
+button{border:0;border-radius:999px;padding:12px 11px;color:#e9e3ff;background:#ffffff0b;font:500 11px system-ui;min-width:54px}
+button.active{background:#ffffff20;box-shadow:inset 0 0 0 1px #ffffff24}
+#hint{align-self:center;margin-bottom:14px;color:#c8bbdc77;font-size:10px;letter-spacing:.13em;text-transform:uppercase;transition:opacity 2s}
+</style></head><body>
+<canvas id="c"></canvas><div id="hud"><div class="brand">L A V A&nbsp; / &nbsp;L U M E N</div>
+<div style="display:flex;flex-direction:column;align-items:center"><div id="hint">коснись жидкости</div><div class="bottom">
+<button data-p="ember" class="active">EMBER</button><button data-p="nebula">NEBULA</button><button data-p="lagoon">LAGOON</button><button id="pause">Ⅱ</button>
+</div></div></div>
+<script>
+(()=>{const canvas=document.getElementById('c'),ctx=canvas.getContext('2d',{alpha:false});let w=0,h=0,dpr=1,last=0,paused=false,mode='ember',touches=[],blobs=[];
+const palettes={ember:[[255,64,44],[255,121,42],[255,188,76],[177,40,91]],nebula:[[120,67,255],[206,74,255],[77,101,255],[255,93,173]],lagoon:[[26,210,190],[40,127,255],[117,245,218],[43,78,157]]};
+function resize(){dpr=Math.min(devicePixelRatio||1,1.5);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);if(!blobs.length){let n=Math.max(7,Math.min(12,Math.round(w/36)));for(let i=0;i<n;i++)blobs.push({x:w*(.15+Math.random()*.7),y:h*(.12+Math.random()*.76),r:Math.min(w,h)*(.07+Math.random()*.085),vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.15,phase:Math.random()*7,seed:Math.random()*20})}}
+addEventListener('resize',resize,{passive:true});resize();
+function color(i,a=1){const p=palettes[mode][((i%4)+4)%4];return 'rgba('+p[0]+','+p[1]+','+p[2]+','+a+')'}
+function paintBlob(b,now){const wobble=1+Math.sin(now*.00045+b.phase)*.09,x=b.x+Math.sin(now*.00022+b.seed)*w*.035,y=b.y+Math.cos(now*.00019+b.seed*2)*h*.045,r=b.r*wobble;
+let g=ctx.createRadialGradient(x-r*.15,y-r*.25,r*.03,x,y,r*1.75);g.addColorStop(0,color(b.seed|0,.98));g.addColorStop(.34,color((b.seed|0)+1,.8));g.addColorStop(.68,color((b.seed|0)+2,.24));g.addColorStop(1,color((b.seed|0)+3,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.75,0,Math.PI*2);ctx.fill();
+let core=ctx.createRadialGradient(x-r*.25,y-r*.3,0,x,y,r);core.addColorStop(0,'rgba(255,255,255,.42)');core.addColorStop(.17,color(b.seed|0,.78));core.addColorStop(.62,color((b.seed|0)+1,.43));core.addColorStop(1,color((b.seed|0)+3,0));ctx.fillStyle=core;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+function frame(now){if(!paused){const dt=Math.min(32,now-(last||now));last=now;ctx.fillStyle='rgba(5,4,11,.22)';ctx.fillRect(0,0,w,h);
+for(const b of blobs){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.x < -b.r)b.x=w+b.r;if(b.x>w+b.r)b.x=-b.r;if(b.y < -b.r)b.y=h+b.r;if(b.y>h+b.r)b.y=-b.r;
+for(const q of touches){let dx=b.x-q.x,dy=b.y-q.y,dist=Math.hypot(dx,dy);if(dist<q.r&&dist>1){b.x+=dx/dist*(q.r-dist)*.003*dt;b.y+=dy/dist*(q.r-dist)*.003*dt}}paintBlob(b,now)}
+for(let i=0;i<16;i++){let x=(i*97+now*.006)%w,y=(i*173+Math.sin(now*.0003+i)*h*.08)%h;ctx.fillStyle=color(i,.13);ctx.fillRect(x,y,1,1)}touches=touches.filter(q=>now-q.time<800)}requestAnimationFrame(frame)}
+ctx.fillStyle='#05040b';ctx.fillRect(0,0,w,h);requestAnimationFrame(frame);
+function splash(x,y){touches.push({x,y,r:Math.min(w,h)*.24,time:performance.now()});let near=blobs.slice().sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y)).slice(0,3);for(const b of near){let dx=b.x-x,dy=b.y-y,d=Math.hypot(dx,dy)||1;b.vx+=dx/d*.18;b.vy+=dy/d*.18}}
+canvas.addEventListener('pointerdown',e=>{splash(e.clientX,e.clientY);document.getElementById('hint').style.opacity='0'});
+document.querySelectorAll('[data-p]').forEach(btn=>btn.addEventListener('click',()=>{mode=btn.dataset.p;document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('active',b===btn));splash(w/2,h/2)}));
+document.getElementById('pause').addEventListener('click',e=>{paused=!paused;e.currentTarget.textContent=paused?'▶':'Ⅱ';if(!paused)last=0});document.addEventListener('visibilitychange',()=>{last=0});
+})();
+</script></body></html>
