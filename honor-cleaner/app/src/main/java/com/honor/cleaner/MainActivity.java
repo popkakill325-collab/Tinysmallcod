@@ -77,8 +77,7 @@ public class MainActivity extends Activity {
         setContentView(outer);
         TextView brand = text("HONOR  /  CARE", 12, accent, true);
         root.addView(brand, lp(-1,24));
-        TextView title = text("Чистка без
-магии и обмана", 29, white, true);
+        TextView title = text("Чистка без\\nмагии и обмана", 29, white, true);
         title.setLineSpacing(dp(1),1f); root.addView(title, lp(-1,80));
         TextView sub = text("Приложения • память • контроль", 14, muted, false);
         root.addView(sub, lp(-1,28));
